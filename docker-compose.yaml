@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 services:
   laravel:
@@ -6,8 +6,33 @@ services:
       context: ./laravel
       dockerfile: Dockerfile
     container_name: laravel
+    restart: always
+    tty: true
+    volumes:
+      - ./laravel-files:/var/www
+    ports:
+      - 9000:9000
     networks:
       - laranet
+    depends_on:
+      - db
+
+  app:
+    build:
+      context: ./node
+      dockerfile: Dockerfile.prod
+    container_name: app
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s sh -c "npm install && node index.js"
+    restart: always
+    tty: true
+    volumes:
+      - ./node:/usr/src/app
+    ports:
+      - 3000:3000
+    networks:
+      - laranet
+    depends_on:
+      - db
   
   nginx:
     build:
@@ -20,6 +45,21 @@ services:
       - laranet
     depends_on:
       - laravel
+
+  db:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=laravel
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+    networks:
+      - laranet
 
 networks:
   laranet:
