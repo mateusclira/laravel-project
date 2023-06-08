@@ -1,6 +1,11 @@
 FROM php:7.4-cli  AS builder
 
-WORKDIR /var/www
+RUN useradd -G www-data,root -u 1000 -d /home/admin admin
+
+RUN mkdir -p /home/admin/.composer && \
+    chown -R admin:admin /home/admin
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && \
     apt-get install libzip-dev -y && \
@@ -21,23 +26,23 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     php composer-setup.php && \
     php -r "unlink('composer-setup.php');"
 
-RUN php composer.phar create-project --prefer-dist laravel/laravel laravel
-
-ENTRYPOINT [ "php","laravel/artisan","serve" ]
-
-CMD [ "--host=0.0.0.0" ]
-
-###########################################################################
-FROM php:7.4-fpm-alpine
-
-WORKDIR /var/www
-
-RUN rm -rf /var/www/html
-
-COPY --from=builder /var/www/laravel .
-
-RUN chown -R www-data:www-data /var/www
-
 EXPOSE 9000 
 
+WORKDIR /var/www
+USER admin
+
 CMD [ "php-fpm" ]
+
+###########################################################################
+# FROM php:7.4-fpm-alpine
+
+# WORKDIR /var/www
+
+# 
+
+# COPY --from=builder /var/www/ .
+
+
+
+# CMD [ ]
+
