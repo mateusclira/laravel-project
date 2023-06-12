@@ -3,13 +3,16 @@ version: '3.7'
 services:
   laravel:
     build:
+      args:
+        user: admin
+        uid: 1000
       context: ./laravel
       dockerfile: Dockerfile
     container_name: laravel
     restart: always
     tty: true
     volumes:
-      - ./laravel-files:/var/www
+      - ./laravel-files:/var/www/laravel
     ports:
       - 9000:9000
     networks:
@@ -53,7 +56,7 @@ services:
     restart: always
     tty: true
     volumes:
-      - ./mysql:/var/lib/mysql
+      - ./db:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=laravel
       - MYSQL_ROOT_PASSWORD=root
